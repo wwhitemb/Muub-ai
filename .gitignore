@@ -1,0 +1,27 @@
+# 本地编辑器和系统文件
+.vscode/
+.idea/
+.trae/
+.DS_Store
+Thumbs.db
+
+# 临时文件和构建输出
+*.tmp
+*.temp
+*.bak
+*.log
+build/
+dist/
+out/
+
+# 敏感配置和本地数据库
+*.db
+*.sqlite
+*.sqlite3
+.env
+.env.*
+secrets/
+credentials/
+
+# PowerShell 临时输出
+*.clixml
