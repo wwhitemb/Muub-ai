@@ -28,7 +28,7 @@
 - `embedded_generic`：MCU、裸机、HAL、寄存器、驱动、RTOS、交叉编译、UART/SPI/I2C/CAN 等嵌入式任务。
 - `rtthread`：出现 RT-Thread API、`rtthread.h`、`rt_device`、`rt_thread`、`rt_mutex`、`INIT_APP_EXPORT` 等证据。
 - `lvgl`：出现 `lv_` API、`lvgl.h`、`lv_ui`、屏幕/控件/定时器刷新等通用 LVGL 证据；该标签本身不代表 GUI Guider。
-- `guider`：用户明确指定 GUI Guider/Guider 导出，或目标工程存在同级 `custom/` 与 `generated/`，且 `generated/` 含 `gui_guider.c/h`、`events_init.c/h`、`setup_scr_*.c`、`widgets_init.c/h` 等生成文件。只有单个 `custom/` 或 `generated/` 目录时不得命中。
+- `guider`：先确认 LVGL 证据，再检查目标工程是否存在同级 `custom/` 与 `generated/`。两者同时存在时进入 Guider 版本识别；存在同级 `.guiguider` 是原始工程，没有则是导出工程。只有单个 `custom/` 或 `generated/` 目录时不得自动命中。
 - `qt`：出现 Qt/C++、`QObject`、`QWidget`、`QQuick`、QML、signals/slots、`.pro`、Qt CMake 包等证据。
 - `can_meter_domain`：任务涉及本项目仪表 CAN、数据池、里程、故障码或参数存储时才启用。
 
@@ -37,8 +37,9 @@
 - 通用 C/C++ 修改：只启用与语言和任务直接相关的规则。
 - `embedded_generic`：启用 `coding-c-safety`；涉及架构或移植时启用 `embedded-arch`。
 - `rtthread`：在 `embedded_generic` 基础上启用 `coding-rtthread-style`。
-- `lvgl`：仅按通用 LVGL 线程模型和项目现有规则处理；不得仅凭 `lvgl` 标签启用 `guider-lvgl-port`。LVGL PC/SDL/Windows 模拟器、手写 LVGL UI、显示/输入驱动默认不启用 Guider Skill。
-- `guider`：启用 `guider-lvgl-port`；若同时运行于 RT-Thread，再叠加 `coding-rtthread-style`。若目录证据与任务描述冲突，以明确用户指令为准并说明假设。
+- `lvgl`：仅按通用 LVGL 线程模型和项目现有规则处理；不得仅凭 `lvgl` 标签启用 `guider-engineering`。LVGL PC/SDL/Windows 模拟器、手写 LVGL UI、显示/输入驱动默认不启用 Guider Skill。
+- `guider`：启用 `guider-engineering`，并按版本和任务只加载一个 `references/guider-{1x|2x}-{project-edit|source-edit}.md`。明确修改 `.guiguider`、GUI Guider 源工程、页面或控件设计时选 `project-edit`；修改导出 C/LVGL、`generated/`、`custom/`、数据绑定、刷新或移植时选 `source-edit`。`project-edit` 中原始工程的 `generated/` 只读；`source-edit` 中 `generated/` 和 `custom/` 可读写，但原始工程再次导出时可能覆盖这些修改。若同时运行于 RT-Thread，再叠加 `coding-rtthread-style`；若涉及嵌入式 C、命名、风格或架构，按证据叠加对应通用 Skill。目录证据与任务描述冲突时停止并说明假设。
+- `skill_repo_maintenance`：仅当用户在 Muub-ai 仓库中创建、修改、重命名或删除 Skill，或调整 Skill 的路由、引用、模板、校验或分发流程时启用 `skill-repo-maintenance`；需要设计或编写 Skill 内容时同时启用 `skill-creator`。普通工程任务中调用既有 Skill、阅读 Skill 文档或修改业务代码不触发维护 Skill。维护 Skill 依据实际反向引用判断同步文件，不要求批量修改无关项目规则。
 - `can_meter_domain`：按任务叠加 `can-bus-dev`、`meter-datapool`、`meter-storage`，不因打开本项目就全部启用。
 - 飞书嵌入式技术文档：用户要求创建、编写、整理或修改飞书文档，且主题涉及 MCU、单片机、STM32、CubeMX、Keil、HAL、RTOS、LVGL、驱动、外设、通信、存储、显示、调试或移植时，启用 `lark-user-skill`；实际读取或写入飞书文档时同时启用 `lark-doc`，浏览知识库目录或参考 Wiki 时同时启用 `lark-wiki`。
 - C/C++ 命名和格式：仅在生成或修改对应代码、公共 API 或进行代码审查时启用 `coding-naming` 与 `coding-style`。
@@ -61,7 +62,7 @@
 - 嵌入式：优先定宽整数类型，关注中断、内存、栈、边界、并发和硬件返回值。
 - RT-Thread：任务、IPC、初始化级别和线程协作遵循 `coding-rtthread-style`。
 - LVGL：所有 LVGL 操作遵循其线程模型；UI 与业务/数据源解耦。
-- GUI Guider：生成目录只读，自定义逻辑放在适配层。
+- GUI Guider：`project-edit` 将 `generated/` 作为只读输出复核；`source-edit` 可按版本规则修改 `generated/` 和 `custom/`，但保留 `.guiguider` 的工程需报告重新导出覆盖风险。
 - 仪表领域：通信层、数据池、UI、存储按对应 Skill 的边界协作。
 - Qt：遵循 Qt 对象树、信号槽、线程亲和性、事件循环、资源和 CMake/qmake 约定；不套用嵌入式命名或 RT-Thread API。
 
@@ -91,10 +92,15 @@
 
 ### LVGL 与仪表领域
 
-- `guider-lvgl-port`：LVGL/GUI Guider 导出、适配、数据绑定和刷新。
+- `guider-engineering`：GUI Guider 1.x/2.x 原始工程和导出 LVGL 工程的版本识别、互斥路由与适配规范。
 - `can-bus-dev`：CAN/CAN FD 报文、解析、过滤和故障处理。
 - `meter-datapool`：仪表数据池、有效性、并发读写和数据流。
 - `meter-storage`：仪表参数、里程和故障记录持久化。
+
+### Skill 仓库维护
+
+- `skill-creator`：设计和编写 Skill 的入口、触发条件、规则和参考文件。
+- `skill-repo-maintenance`：分析 Muub-ai 内 Skill 变更的反向引用和影响面，按实际需要同步路由、文档、模板、校验和分发说明。
 
 ### Qt
 

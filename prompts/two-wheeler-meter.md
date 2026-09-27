@@ -21,7 +21,7 @@
 | 安全 | `coding-c-safety` | 指针、边界、中断、并发和帧校验 |
 | RT-Thread | `coding-rtthread-style` | 任务、线程、IPC 和调度 |
 | 架构 | `embedded-arch` | 分层、HAL、OSAL 和移植边界 |
-| UI | `guider-lvgl-port` | GUI Guider 导入、生成目录和数据绑定 |
+| UI | `guider-engineering` | GUI Guider 1.x/2.x 版本路由、设计源和导出工程边界 |
 | CAN | `can-bus-dev` | CAN 报文、解析、过滤和故障处理 |
 | 数据池 | `meter-datapool` | 有效性、超时、并发和数据共享 |
 | 存储 | `meter-storage` | 参数、里程、故障记录和 CRC |
@@ -38,7 +38,7 @@
 ## 项目约束
 
 - UI 与业务解耦：LVGL 只做显示，数据统一从全局数据池读取。
-- GUI Guider 生成代码不手工修改，自定义逻辑放在适配层。
+- GUI Guider 按任务选择路由：设计源、页面、控件和样式修改走 `project-edit`，此阶段 `generated/` 只读；导出 C/LVGL、`generated/`、`custom/` 和平台适配修改走 `source-edit`，这些目录可读写。原始工程保留 `.guiguider` 时，重新导出可能覆盖 `source-edit` 对 `generated/` 的修改。
 - CAN、RS485 和一线通解析后写入数据池，UI 和业务只从数据池读取。
 - 使用 `stdint.h` 定宽类型，头文件使用防重复包含保护。
 - 硬件参数、协议 ID 和阈值统一配置，禁止裸魔法数字。

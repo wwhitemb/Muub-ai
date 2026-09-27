@@ -10,7 +10,7 @@
 
 - UI 只负责显示，业务和硬件数据统一经过全局数据池。
 - 通信层负责 CAN、RS485 和一线通报文解析，UI 与业务层不得直接解析协议或访问硬件。
-- GUI Guider 生成目录视为只读，自定义逻辑放在 UI 适配层，避免重新导出时丢失业务代码。
+- GUI Guider 按 `guider-engineering` 的任务路由处理：`project-edit` 中 `generated/` 只读，`source-edit` 中 `generated/` 与 `custom/` 可读写。保留 `.guiguider` 的原始工程在重新导出时可能覆盖 `source-edit` 对 `generated/` 的修改；页面布局和控件树变化仍应回到设计源。
 - 硬件参数、协议 ID 和阈值使用集中宏或配置定义，禁止散落魔法数字。
 
 ## 安全约束
@@ -29,7 +29,7 @@
 - 嵌入式 C 安全：`coding-c-safety`
 - RT-Thread：`coding-rtthread-style`
 - 分层架构：`embedded-arch`
-- LVGL/GUI Guider：`guider-lvgl-port`
+- LVGL/GUI Guider：`guider-engineering`
 - CAN/CAN FD：`can-bus-dev`
 - 全局数据池：`meter-datapool`
 - 参数和故障存储：`meter-storage`

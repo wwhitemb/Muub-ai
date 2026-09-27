@@ -18,7 +18,7 @@ description: "RT-Thread 任务、优先级、线程、IPC、LVGL 协同、内存
 > - CAN收发/解析 → `can-bus-dev` Skill
 > - 数据池读写 → `meter-datapool` Skill
 > - 存储写入 → `meter-storage` Skill
-> - UI刷新/LVGL → `guider-lvgl-port` Skill
+> - UI刷新/LVGL → `guider-engineering` Skill 的 source-edit 参考文件
 > - 架构分层/OSAL/初始化 → `embedded-arch` Skill
 
 ## 核心执行规范
@@ -167,7 +167,7 @@ lv_xxx_show(local_copy.value, ...);
 3. 定时器生命周期管理：`LV_EVENT_SCREEN_LOADED` 创建 → `LV_EVENT_SCREEN_UNLOADED` 删除
 4. 定时器回调中使用局部变量拷贝数据池数据，持锁时间最小化
 
-> 完整实现见 `guider-lvgl-port` Skill §4（数据绑定机制+定时器回调模板+主题切换）。
+> 完整实现见 `guider-engineering` Skill 的对应 source-edit 参考文件（数据绑定、定时器回调和主题切换）。
 
 ### 5. 内存与资源管理
 #### 5.1 分配策略
@@ -213,7 +213,7 @@ lv_xxx_show(local_copy.value, ...);
 | 锁内拷贝→锁外操作 | 持锁仅做数据拷贝，锁外执行耗时操作 | meter-datapool §5 |
 | 事件驱动写入 | 高优先级发事件，低优先级执行写入 | meter-storage §3 |
 | 计数器分频 | 单定时器+计数器实现多周期调度 | can-bus-dev §3.2 |
-| 页面生命周期管理 | SCREEN_LOADED创建timer，UNLOADED删除 | guider-lvgl-port §4 |
+| 页面生命周期管理 | SCREEN_LOADED创建timer，UNLOADED删除 | guider-engineering source-edit 参考文件 |
 | 故障码偏移映射 | 不同来源故障码+偏移量区分优先级 | can-bus-dev §6 |
 
 ### 8. 反面模式与常见错误

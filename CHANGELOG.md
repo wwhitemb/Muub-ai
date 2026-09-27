@@ -1,5 +1,14 @@
 # 变更记录
 
+## 2026-09-27
+
+- 新增 `skill-repo-maintenance`，用于分析 Skill 变更的反向引用和仓库联动影响面。
+- 扩展 `docs/skill-maintenance.md`、全局路由和仓库校验，明确 `skill-creator` 与维护 Skill 的组合边界，并增加本地 Markdown 链接检查。
+- 将 `guider-lvgl-port` 重构为 `guider-engineering` 总 Skill。
+- 增加 Guider 1.x/2.x 的 `project-edit` 和 `source-edit` 四路由参考文件。
+- 明确先确认 LVGL、再识别同级 `custom/` 与 `generated/`、再判断原始/导出工程和版本。
+- 明确按任务路由 `generated/` 权限：`project-edit` 只读复核，`source-edit` 可读写；保留 `.guiguider` 的原始工程重新导出时可能覆盖 `generated/` 修改，并更新仓库路由与动态 Skill 校验。
+
 ## 2026-09-26
 
 - 创建 Muub-ai 个人 AI 仓库。

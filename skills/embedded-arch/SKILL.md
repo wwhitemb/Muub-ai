@@ -53,12 +53,10 @@ packages/artinchip/lvgl-ui/aic_demo/guider_1048_rgb_long_demo/
 │   ├── custom_file.c/h      # 图片路径宏定义、动画图片数组声明
 │   └── lv_conf_ext.h        # LVGL配置扩展（board/simulator差异化）
 │
-├── generated/                # 【禁止修改】Guider生成层
-│   ├── gui_guider.c/h       # UI结构体定义、屏幕/动画辅助函数
-│   ├── events_init.c/h      # 事件初始化（屏幕加载/卸载事件）
-│   ├── setup_scr_screen.c   # 屏幕控件创建、样式设置、初始数据绑定
-│   ├── widgets_init.c/h     # 控件初始化
-│   └── images/              # 图片资源（按主题分类：dark/light/other/run）
+├── generated/                # project-edit 只读复核；source-edit 可维护的导出源（1.x/2.x结构由版本决定）
+│   ├── gui_guider.* 或 gg_*.*
+│   ├── screens/、events/、assets/（2.x可能存在）
+│   └── images/、guider_fonts/（1.x可能存在）
 │
 ├── ui_init.c/h              # UI初始化入口（调用custom_init/setup_ui/events_init）
 ├── lv_conf_custom.h         # LVGL自定义配置
@@ -133,7 +131,7 @@ kernel/
 **设计原则：**
 - 业务层仅从数据池读取数据，禁止直接访问通信缓冲区
 - 业务层仅调用LVGL接口更新显示，禁止做业务计算
-- 业务层与Guider生成代码严格隔离，禁止修改generated/目录
+- 业务层与 Guider 代码保持边界：`project-edit` 中 `generated/` 只读复核，`source-edit` 中 `generated/` 与 `custom/` 可读写；原始工程重新导出可能覆盖 source-edit 对 `generated/` 的修改
 
 #### 2.3 驱动层职责
 - **DRV层**：对接RT-Thread驱动框架，注册设备（rt_device），使用OSAL接口
@@ -180,29 +178,22 @@ guider_xxx_demo/
 │   ├── custom_file.c/h     # 图片路径、动画数组
 │   └── lv_conf_ext.h       # LVGL配置扩展
 │
-└── generated/               # Guider生成层（禁止修改）
-    ├── gui_guider.c/h      # UI结构体、屏幕创建函数
-    ├── events_init.c/h     # 事件初始化
-    ├── setup_scr_screen.c  # 控件创建、样式设置
-    └── widgets_init.c/h    # 控件初始化
+└── generated/               # project-edit 只读复核；source-edit 可维护的导出源
+    ├── 1.x：gui_guider.*、setup_scr_*.c、events_init.*、widgets_init.*
+    └── 2.x：gg_utils.*、screens/、events/、assets/
 ```
 
-#### 4.2 代码隔离原则
-**禁止修改的文件：**
-- generated/目录下所有文件：gui_guider.c、events_init.c、setup_scr_screen.c、widgets_init.c
-- generated/images/目录：图片资源文件
-- generated/guider_fonts/目录：字体资源文件
-
-**允许修改的文件：**
-- custom/目录下所有文件：custom.c、custom_file.c、lv_conf_ext.h
-- ui_init.c/h：UI初始化入口
-- lv_conf_custom.h：LVGL自定义配置
+#### 4.2 按任务类型的代码边界
+- `project-edit`：存在 `.guiguider` 的原始工程中，`generated/` 下的 C/H、图片、字体、资源清单和构建文件只读，只用于句柄、资源和生成结果复核；设计改动写回 `.guiguider`，适配逻辑写入 `custom/` 或适配层。没有 `.guiguider` 时，不能从 `generated/` 反推设计源，应停止并报告。
+- `source-edit`：`generated/` 与 `custom/` 可读写，可维护 1.x 的 `gui_guider.*`、`setup_scr_*.c`、`events_init.*`、`widgets_init.*`，以及 2.x 的 `gg_utils.*`、`screens/`、`events/`、`assets/`、资源和构建文件。保留 `.guiguider` 的原始工程再次导出时，这些 `generated/` 修改可能被覆盖。
+- 无论工程状态，页面布局、控件树、样式和设计事件结构都应回到 `project-edit` 修改设计源，不能用 source-edit 的生成代码代替设计源。
+- `custom/` 下的 `custom.c`、`custom_file.c`、`lv_conf_ext.h`，以及 `ui_init.c/h`、`lv_conf_custom.h` 按任务需要维护；共享数据和平台适配仍应与生成界面解耦。
 
 #### 4.3 迭代修改流程
-1. UI布局、样式、控件增删：在GUI Guider中修改 → 导出 → 覆盖generated/目录
-2. 数据绑定、业务逻辑：在custom/目录修改 → 不影响generated/目录
-3. 导出后验证：检查lv_ui结构体控件句柄是否变更 → 同步更新custom.c中控件访问代码
-4. 重大改版备份：导出前备份custom/目录，防止控件句柄不兼容
+1. UI布局、样式、控件增删：按 `guider-engineering` 的 project-edit 规则修改设计源，再重新生成
+2. 数据绑定、业务逻辑和平台适配：按 `guider-engineering` 的 source-edit 规则修改 `custom/`、`generated/` 和适配层；若保留 `.guiguider`，记录重新导出覆盖风险
+3. 导出后验证：按版本检查 `lv_ui` 或 `gg_ui_t` 句柄，并同步适配代码
+4. 重大改版前备份 `custom/` 和记录生成头文件接口，防止句柄不兼容
 
 ### 5. 模块间通信规范
 
@@ -287,7 +278,7 @@ app_1048_rgb_long/
 guider_1048_rgb_long_demo/
 ├── custom/custom.c         # 数据池定义：meter_can_struct、meter_btn_struct
 ├── custom/custom_file.h    # 图片路径：IMG_PATH_LIGHT_xxx、IMG_PATH_DARK_xxx
-├── generated/gui_guider.h  # UI结构体：lv_ui（screen_img_beam_left等控件句柄）
+├── generated/gui_guider.h  # 1.x 的 lv_ui，或 2.x 的 gg_ui_t/gg_screen_* 结构
 └── ui_init.c               # 初始化：custom_init → setup_ui → events_init
 ```
 

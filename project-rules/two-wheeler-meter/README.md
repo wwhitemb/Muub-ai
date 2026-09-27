@@ -4,4 +4,4 @@
 
 适用技术栈：RT-Thread、LVGL、CAN、RS485、一线通通信和车载仪表固件。
 
-通用编码细则不在此重复维护，按任务调用仓库中的 `coding-*`、`embedded-arch`、`guider-lvgl-port`、`can-bus-dev`、`meter-datapool` 和 `meter-storage` Skill。
+通用编码细则不在此重复维护，按任务调用仓库中的 `coding-*`、`embedded-arch`、`guider-engineering`、`can-bus-dev`、`meter-datapool` 和 `meter-storage` Skill。GUI Guider 任务由总 Skill 按 1.x/2.x 与 project-edit/source-edit 只加载一个参考文件。
