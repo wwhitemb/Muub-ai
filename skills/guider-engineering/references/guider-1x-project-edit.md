@@ -39,6 +39,46 @@ generated/
 node -e "const fs=require('fs'); const p='project.guiguider'; const o=JSON.parse(fs.readFileSync(p,'utf8')); if(o.FrontJson===undefined||!o.Application||!Array.isArray(o.Application.screen)) process.exit(1); console.log('GUIGUIDER_STRUCTURE=OK')"
 ```
 
+## 大文件快速修改方法
+
+大型 `.guiguider` 文件经常超过 1 MB、包含数万行。文件大小通常不会明显拖慢本地 Node.js 的 JSON 解析，但完整终端输出会增加模型上下文和 Token 消耗。应将本地解析与对话输出分开：
+
+1. 不要完整打印文件或完整 `git diff`；只输出页面名、控件名、ID、类型、位置、尺寸、命中数量和校验结果。
+2. 先用 `JSON.parse` 读取完整文件，再按页面名/页面 ID、控件 ID 和 `name` 建立修改清单；不要依赖行号或数组下标。
+3. 少量字段修改使用“解析确认 + 对象级局部写回”：在内存对象中修改目标，再只替换该对象对应的完整 JSON 块。局部写回必须以唯一 `id` 为边界，禁止全文替换和正则替换。
+4. 大范围结构变更才使用 `JSON.stringify` 全量写回；全量写回后必须复核页面、控件、事件和资源数量，因为可能产生较大格式 diff。
+5. `FrontJson` 与 `Application` 按相同 `id` 配对修改，不能假设两套结构的数组顺序或字段结构完全一致。
+6. 写回后只做摘要验证：再次 `JSON.parse`，检查命中数量、旧名称残留、ID/父子关系、位置尺寸、事件和资源引用，再运行 `git diff --check`。
+
+### 推荐的快速检查命令
+
+```powershell
+node -e "const fs=require('fs'); const p='project.guiguider'; const d=JSON.parse(fs.readFileSync(p,'utf8')); const s=d.Application.screen.find(x=>x.name==='Weather_Screen'); console.log(JSON.stringify({screens:d.Application.screen.length, weatherWidgets:s?.widgets?.length},null,2));"
+```
+
+针对单个控件时，只打印摘要，不打印完整对象：
+
+```javascript
+const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+const screen = data.Application.screen.find((item) => item.name === screenName);
+const hits = [];
+walk(screen, 'Application.screen', (widget, path) => {
+  if (widget.id === targetId) hits.push({ path, name: widget.name, type: widget.type, pos: widget.pos, size: widget.size });
+});
+if (hits.length !== 1) throw new Error('expected one widget, got ' + hits.length);
+console.log(JSON.stringify(hits[0], null, 2));
+```
+
+### 局部写回的边界
+
+- 局部写回只适合已通过 JSON 解析确认、且目标对象可由唯一 `id` 定位的少量修改。
+- 修改对象后由 JSON 序列化器生成该对象文本，再替换完整对象块；不得手工拼接转义后的 JSON 字符串。
+- 修改 `customer_code`、`custom_code` 或事件动作时，先修改解析后的字符串值，再序列化所属对象；同时搜索 `guider_ui.xxx`、`ui->xxx` 和旧控件名。
+- 无法可靠定位对象边界、同一 `id` 出现次数异常或两套结构不一致时，停止局部写回，报告冲突并改用全量序列化或 GUI Guider 保存。
+- 写回前可保存原文件哈希；写回后只比较目标对象和结构摘要，避免把工作区已有改动误判为本次变更。
+
+该方法用于减少终端输出、模型上下文和无关 diff，不绕过 JSON 解析、对象唯一性检查或写回后的语义验证。
+
 ## 控件和页面定位
 
 按对象身份定位，优先级如下：
