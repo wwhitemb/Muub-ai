@@ -31,8 +31,8 @@
 
 ## 新建 Skill
 
-1. 复制 `templates/SKILL.md.template` 到 `skills/<skill-name>/SKILL.md`。
-2. 将 `name` 设置为目录名，将 `description` 写成明确的触发条件、适用范围和排除范围。
+1. 复制 `templates/SKILL.md.template` 到 `skills/<skill-name>/SKILL.md`，或放入领域分组目录，例如 `skills/office/<skill-name>/SKILL.md`。
+2. 将 `name` 设置为 Skill 所在目录的最后一级目录名，将 `description` 写成明确的触发条件、适用范围和排除范围；领域分组目录本身不填写为 Skill 名称。
 3. 将复杂背景资料放入该 Skill 的 `references/` 目录，并在入口文件中说明每份参考文件的加载条件和互斥关系。
 4. 明确该 Skill 与已有 Skill 的职责边界，避免两个入口对同一任务给出冲突规则。
 5. 运行 `scripts/validate-skills.ps1`，再执行本文件的影响分析和本地链接检查。
@@ -46,7 +46,7 @@
 
 | 变更类型 | 首要检查对象 | 可能需要同步 |
 | --- | --- | --- |
-| Skill 内部规则、示例或注释 | `skills/<name>/SKILL.md`、`references/`、附件 | 反向引用、`CHANGELOG.md`、受影响项目规则 |
+| Skill 内部规则、示例或注释 | `skills/<name>/SKILL.md` 或 `skills/<domain>/<name>/SKILL.md`、`references/`、附件 | 反向引用、`CHANGELOG.md`、受影响项目规则 |
 | `name`、`description`、触发条件或互斥关系 | 入口 frontmatter、全局和项目路由 | 所有名称引用、提示词、README、校验项、CHANGELOG |
 | `references/` 增删、重命名或加载关系 | 入口、参考文件和校验脚本 | 入口说明、引用路径、校验脚本、相关文档 |
 | 模板或示例变化 | `templates/`、使用模板的入口 | 创建流程、维护文档、校验说明 |
@@ -72,7 +72,7 @@
 
 - `prompts/` 下的全局提示词和项目提示词；
 - `project-rules/` 下的 `AGENTS.md`、README 和其他规则；
-- `skills/` 下其他 Skill 的描述、路由、组合规则和参考文件；
+- `skills/` 下其他 Skill 的描述、路由、组合规则和参考文件；递归检查一级 Skill 与领域分组 Skill；
 - 根 `README.md`、`CHANGELOG.md`、`docs/`、`templates/`、`scripts/`；
 - 分发文档或脚本，例如 `docs/sync-with-cc-switch.md`（仅在分发关系受影响时）。
 

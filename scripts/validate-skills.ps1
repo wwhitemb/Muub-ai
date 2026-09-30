@@ -38,7 +38,8 @@ $excludedOfficialSkills = @(
 if (-not (Test-Path -LiteralPath $skillsRoot -PathType Container)) {
         Add-Failure "skills directory not found: $skillsRoot"
 } else {
-    $skillDirectories = @(Get-ChildItem -LiteralPath $skillsRoot -Directory -Force | Sort-Object Name)
+    $skillFiles = @(Get-ChildItem -LiteralPath $skillsRoot -Recurse -File -Force -Filter 'SKILL.md' | Sort-Object FullName)
+    $skillDirectories = @($skillFiles | ForEach-Object { $_.Directory } | Sort-Object FullName)
     if ($skillDirectories.Count -eq 0) {
         Add-Failure "No skills found under: $skillsRoot"
     }
@@ -66,10 +67,6 @@ if (-not (Test-Path -LiteralPath $skillsRoot -PathType Container)) {
         }
 
         $skillFile = Join-Path $skillDirectory.FullName 'SKILL.md'
-        if (-not (Test-Path -LiteralPath $skillFile -PathType Leaf)) {
-            Add-Failure "SKILL.md is missing: $skillFile"
-            continue
-        }
 
         $content = Get-Content -LiteralPath $skillFile -Raw -Encoding UTF8
         $hasFrontmatter = $content.TrimStart().StartsWith('---')
@@ -140,7 +137,7 @@ if (-not (Test-Path -LiteralPath $skillsRoot -PathType Container)) {
     }
 
     $legacyRouteFiles = @(
-        (Join-Path $RepositoryRoot 'prompts/codex-global.md'),
+        (Join-Path $RepositoryRoot 'prompts/global.md'),
         (Join-Path $RepositoryRoot 'prompts/two-wheeler-meter.md'),
         (Join-Path $RepositoryRoot 'project-rules/two-wheeler-meter/AGENTS.md'),
         (Join-Path $RepositoryRoot 'project-rules/two-wheeler-meter/README.md'),

@@ -21,7 +21,7 @@
 
 ## 当前 Skills
 
-当前仓库只维护个人或技术类 Skill。飞书官方 `lark-*` Skill 不复制，个人维护的 `lark-user-skill` 除外。
+当前仓库只维护个人或技术类 Skill。飞书官方 `lark-*` Skill 不复制，个人维护的 `lark-user-skill` 除外。Skill 可以直接放在 `skills/` 下，也可以按领域放在分组目录下，例如 `skills/office/xls-io-mapping/`。
 
 GUI Guider 统一使用 `guider-engineering`：总入口按 LVGL、Guider 版本和 project-edit/source-edit 任务类型只加载一个 `references/` 规范。`project-edit` 将原始工程的 `generated/` 作为只读输出，`source-edit` 可读写 `generated/` 与 `custom/`；保留 `.guiguider` 时需注意重新导出覆盖风险。普通 LVGL 工程不自动启用该 Skill。
 
@@ -29,7 +29,7 @@ Skill 仓库维护使用 `skill-repo-maintenance`：它只在本仓库的 Skill�
 
 ## CC Switch
 
-在 CC Switch 中添加该仓库时，将仓库子目录设置为 `skills`。提示词、项目规则和文档不作为 Skill 安装。
+在 CC Switch 中添加该仓库时，将仓库子目录设置为 `skills`。本仓库按递归目录组织包含 `SKILL.md` 的 Skill，`office` 等分组目录不单独作为 Skill；实际客户端是否支持嵌套目录需在部署时确认。提示词、项目规则和文档不作为 Skill 安装。
 
 详细流程见 [`docs/sync-with-cc-switch.md`](docs/sync-with-cc-switch.md)。
 

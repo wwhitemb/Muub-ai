@@ -31,6 +31,7 @@
 - `guider`：先确认 LVGL 证据，再检查目标工程是否存在同级 `custom/` 与 `generated/`。两者同时存在时进入 Guider 版本识别；存在同级 `.guiguider` 是原始工程，没有则是导出工程。只有单个 `custom/` 或 `generated/` 目录时不得自动命中。
 - `qt`：出现 Qt/C++、`QObject`、`QWidget`、`QQuick`、QML、signals/slots、`.pro`、Qt CMake 包等证据。
 - `can_meter_domain`：任务涉及本项目仪表 CAN、数据池、里程、故障码或参数存储时才启用。
+- `xls_io_mapping`：任务涉及芯片、外设、接口、IO 与需求对应关系的 `.xls/.xlsx` 工作簿创建、整理、分析或可视化时启用；普通电子表格任务不自动触发。
 
 ### 2.3 路由规则
 
@@ -44,6 +45,7 @@
 - 飞书嵌入式技术文档：用户要求创建、编写、整理或修改飞书文档，且主题涉及 MCU、单片机、STM32、CubeMX、Keil、HAL、RTOS、LVGL、驱动、外设、通信、存储、显示、调试或移植时，启用 `lark-user-skill`；实际读取或写入飞书文档时同时启用 `lark-doc`，浏览知识库目录或参考 Wiki 时同时启用 `lark-wiki`。
 - C/C++ 命名和格式：仅在生成或修改对应代码、公共 API 或进行代码审查时启用 `coding-naming` 与 `coding-style`。
 - `qt`：启用 `qt-cpp-dev`；不得调用 RT-Thread、LVGL、仪表数据池或 GUI Guider Skill，除非代码中有明确跨平台集成证据。
+- `xls_io_mapping`：启用 `xls-io-mapping`，按其规则组织完整引脚表、系统 IO 总览、外设汇总、需求对应和颜色图例；区分芯片原始复用、原理图网络、实际功能和需求项，不编造缺失硬件事实。该 Skill 位于 `skills/office/xls-io-mapping/`，`office` 只是分组目录。
 - 环境证据冲突时，暂停专用假设，向用户询问目标平台或以现有代码接口为准。
 
 ## 3. 通用代码质量要求
@@ -105,6 +107,10 @@
 
 - `skill-creator`：设计和编写 Skill 的入口、触发条件、规则和参考文件。
 - `skill-repo-maintenance`：分析 Muub-ai 内 Skill 变更的反向引用和影响面，按实际需要同步路由、文档、模板、校验和分发说明。
+
+### Office 表格
+
+- `xls-io-mapping`：芯片、外设、接口、IO 与需求映射的 `.xls/.xlsx` 工作簿结构、功能分组配色、筛选冻结、图例和交付检查；仅在 `xls_io_mapping` 环境标签命中时使用。
 
 ### Qt
 

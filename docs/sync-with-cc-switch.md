@@ -10,12 +10,12 @@
 子目录：skills
 ```
 
-CC Switch 会扫描 `skills/` 下的每个 Skill，不会安装 `prompts/`、`project-rules/`、`docs/` 或 `scripts/`。
+本仓库约定递归识别 `skills/` 下包含 `SKILL.md` 的 Skill 目录。例如 `skills/office/xls-io-mapping/SKILL.md` 的 Skill 名称为 `xls-io-mapping`，`skills/office/` 只是分组目录。当前仓库未验证 CC Switch 客户端是否支持这种嵌套目录；首次部署时应确认客户端扫描结果，必要时将仓库子目录调整为客户端支持的目录层级。`prompts/`、`project-rules/`、`docs/` 和 `scripts/` 不会作为 Skill 安装。
 
 ## 更新流程
 
 ```text
-修改 skills/<skill-name>/SKILL.md
+修改 skills/<skill-name>/SKILL.md 或 skills/<domain>/<skill-name>/SKILL.md
     ↓
 运行 scripts/validate-skills.ps1
     ↓
