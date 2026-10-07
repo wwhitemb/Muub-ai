@@ -25,3 +25,4 @@
 - Skill 的深度背景资料放在对应目录的 `references/` 中，避免把所有内容塞进入口文件。
 - `skills/` 是 Skill 的安装根目录，仓库校验支持一级 Skill 和按领域分组的嵌套 Skill；其他目录由项目和人工维护。外部安装客户端的递归能力需要单独确认。
 - 分组目录（例如 `skills/office/`）本身不是 Skill，只有包含 `SKILL.md` 的目录才是可安装 Skill。
+- `prompts/` 是提示词源文件，不属于 Skill 安装内容；使用 CC Switch 时必须单独注入全局/领域提示词，不能仅刷新 `skills/` 目录来获得其中的路由和输出门槛。

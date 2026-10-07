@@ -29,7 +29,7 @@ Skill 仓库维护使用 `skill-repo-maintenance`：它只在本仓库的 Skill�
 
 ## CC Switch
 
-在 CC Switch 中添加该仓库时，将仓库子目录设置为 `skills`。本仓库按递归目录组织包含 `SKILL.md` 的 Skill，`office` 等分组目录不单独作为 Skill；实际客户端是否支持嵌套目录需在部署时确认。提示词、项目规则和文档不作为 Skill 安装。
+在 CC Switch 中添加该仓库时，将仓库子目录设置为 `skills`。本仓库按递归目录组织包含 `SKILL.md` 的 Skill，`office` 等分组目录不单独作为 Skill；实际客户端是否支持嵌套目录需在部署时确认。提示词、项目规则和文档不作为 Skill 安装，`prompts/global.md` 与 `prompts/two-wheeler-meter.md` 必须由实际运行环境单独注入或复制到项目规则中，否则其中的全局路由和中文注释门槛不会生效。
 
 详细流程见 [`docs/sync-with-cc-switch.md`](docs/sync-with-cc-switch.md)。
 

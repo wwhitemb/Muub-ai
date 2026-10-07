@@ -1,6 +1,6 @@
 ---
 name: "coding-style"
-description: "C/C++ 文件结构、格式、Doxygen 注释、类型、头文件、错误路径和代码审查规范。Use when Codex creates or modifies C/C++ modules, headers, public APIs, comments, formatting, or performs a style review."
+description: "C/C++ 文件结构、格式、中文注释、Doxygen、类型、头文件、错误路径和代码审查规范；代码块内新增或修改的注释默认使用中文。Use when Codex creates or modifies C/C++ files, functions, snippets, patches, headers, public APIs, comments, formatting, or performs a style review."
 ---
 
 # C/C++编码风格与注释规范
@@ -11,6 +11,7 @@ description: "C/C++ 文件结构、格式、Doxygen 注释、类型、头文件�
 ## 触发场景
 
 - 新建模块、编写公共API头文件
+- 在回复中生成或修改 C/C++ 完整文件、函数片段、补丁或示例
 - 代码评审、格式规范化整改
 - 编写SDK级别的可复用组件
 - 需要生成API文档的模块开发
@@ -37,6 +38,16 @@ description: "C/C++ 文件结构、格式、Doxygen 注释、类型、头文件�
 #### 0.1 注释语言优先级
 
 注释默认使用中文。只有用户明确要求其他语言注释时，才允许本次新增或修改的注释使用其他语言；不得因代码、SDK、示例、目标文件既有注释或模型默认习惯改用英文。该规则覆盖 Doxygen、块注释、行内注释、`@brief`、`@param` 和 `@return`。既有英文注释仅在用户要求统一翻译或本次必须修改该注释时才处理，避免无关的全文件翻译。
+
+#### 0.2 代码输出硬性门槛
+
+只要本次响应包含 C/C++ 代码，本 Skill 就约束代码块本身，不得只在代码块外解释：
+
+1. 新增或修改的注释必须使用中文；英文标识符、宏名、协议字段、库 API 和标准术语不属于英文注释。
+2. 公共 API、回调、状态切换、资源申请/释放、输入校验、边界判断、并发保护、错误返回和非显然业务逻辑必须在代码附近提供中文注释，说明原因、触发来源、状态结果或失败影响。
+3. 输出完整 `.c` 或 `.h` 文件时，必须包含文件头注释；输出函数片段或补丁时不虚构文件头，但不得因此省略本次逻辑所需的中文注释。
+4. 代码输出前执行一次“注释门禁”：逐个检查新增函数和关键分支；发现非显然逻辑没有中文注释时，先补注释再输出。
+5. 用户要求“只输出代码”时仍执行本门禁；只省略代码块外的说明，不省略代码内注释。
 
 ### 1. Doxygen注释规范
 

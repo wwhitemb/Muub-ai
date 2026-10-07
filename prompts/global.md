@@ -35,7 +35,7 @@
 
 ### 2.3 路由规则
 
-- 通用 C/C++ 修改：只启用与语言和任务直接相关的规则。
+- 通用 C/C++ 修改或生成：强制启用 `coding-naming` 和 `coding-style`；涉及嵌入式 C 时再叠加 `coding-c-safety`，涉及 RT-Thread、Qt、LVGL 或具体业务领域时继续按对应规则叠加。不得把 `coding-style` 仅理解为代码评审 Skill。
 - `embedded_generic`：启用 `coding-c-safety`；涉及架构或移植时启用 `embedded-arch`。
 - `rtthread`：在 `embedded_generic` 基础上启用 `coding-rtthread-style`。
 - `lvgl`：仅按通用 LVGL 线程模型和项目现有规则处理；不得仅凭 `lvgl` 标签启用 `guider-engineering`。LVGL PC/SDL/Windows 模拟器、手写 LVGL UI、显示/输入驱动默认不启用 Guider Skill。
@@ -43,10 +43,20 @@
 - `skill_repo_maintenance`：仅当用户在 Muub-ai 仓库中创建、修改、重命名或删除 Skill，或调整 Skill 的路由、引用、模板、校验或分发流程时启用 `skill-repo-maintenance`；需要设计或编写 Skill 内容时同时启用 `skill-creator`。普通工程任务中调用既有 Skill、阅读 Skill 文档或修改业务代码不触发维护 Skill。维护 Skill 依据实际反向引用判断同步文件，不要求批量修改无关项目规则。
 - `can_meter_domain`：按任务叠加 `can-bus-dev`、`meter-datapool`、`meter-storage`，不因打开本项目就全部启用。
 - 飞书嵌入式技术文档：用户要求创建、编写、整理或修改飞书文档，且主题涉及 MCU、单片机、STM32、CubeMX、Keil、HAL、RTOS、LVGL、驱动、外设、通信、存储、显示、调试或移植时，启用 `lark-user-skill`；实际读取或写入飞书文档时同时启用 `lark-doc`，浏览知识库目录或参考 Wiki 时同时启用 `lark-wiki`。
-- C/C++ 命名和格式：仅在生成或修改对应代码、公共 API 或进行代码审查时启用 `coding-naming` 与 `coding-style`。
+- C/C++ 命名和格式：只要响应中将生成或修改 C/C++ 代码（包括完整文件、函数片段、补丁和示例），就必须启用 `coding-naming` 与 `coding-style`；仅讨论概念且不输出代码时可不启用。
 - `qt`：启用 `qt-cpp-dev`；不得调用 RT-Thread、LVGL、仪表数据池或 GUI Guider Skill，除非代码中有明确跨平台集成证据。
 - `xls_io_mapping`：启用 `xls-io-mapping`，按其规则组织完整引脚表、系统 IO 总览、外设汇总、需求对应和颜色图例；区分芯片原始复用、原理图网络、实际功能和需求项，不编造缺失硬件事实。该 Skill 位于 `skills/office/xls-io-mapping/`，`office` 只是分组目录。
 - 环境证据冲突时，暂停专用假设，向用户询问目标平台或以现有代码接口为准。
+
+### 2.4 C/C++ 代码输出硬性门槛
+
+只要响应中包含 C/C++ 代码，以下规则直接约束代码块本身，而不是只约束交付说明：
+
+1. 新增或修改的注释默认必须使用中文；用户明确要求其他语言时，才允许改用指定语言。英文标识符、宏名、协议字段、库 API 和标准术语不算英文注释。
+2. 不得输出“代码无注释、解释放在代码块外”的 C/C++ 结果。代码块内必须为公共 API、回调、状态切换、资源生命周期、输入校验、边界判断、并发约束、错误路径和非显然业务逻辑提供对应注释。
+3. 输出完整 `.c` 或 `.h` 文件时，按 `coding-style` 补充文件头、公共 API 和类型注释；输出局部片段时不强制虚构文件头，但仍必须保留与本次逻辑相关的中文注释。
+4. 生成代码后先自检代码块：若存在新增的非显然逻辑、错误处理或状态/资源变化却没有中文注释，必须先补注释再输出；不能只在最终说明中声称“已使用中文注释”。
+5. 用户要求“只给代码”时，本门槛仍然有效；只是不再额外展开实现说明。
 
 ## 3. 通用代码质量要求
 
