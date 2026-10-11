@@ -16,6 +16,43 @@ function Add-Failure {
     $script:failed = $true
 }
 
+function Add-Notice {
+    param([string]$Message)
+    Write-Warning "Notice: $Message"
+}
+
+function Get-StrictUtf8Text {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    try {
+        $bytes = [IO.File]::ReadAllBytes($Path)
+    } catch {
+        Add-Failure "Unable to read text file: $Path"
+        return ''
+    }
+
+    if ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
+        Add-Failure "UTF-8 BOM is not allowed: $Path"
+    }
+    if ($bytes -contains 0) {
+        Add-Failure "NUL byte found in text file: $Path"
+    }
+
+    try {
+        $decoder = [Text.UTF8Encoding]::new($false, $true)
+        $text = $decoder.GetString($bytes)
+    } catch {
+        Add-Failure "File is not valid UTF-8: $Path"
+        return ''
+    }
+
+    if ($text.IndexOf([char]0xFFFD) -ge 0) {
+        Add-Failure "Unicode replacement character found: $Path"
+    }
+
+    return $text
+}
+
 if (-not (Test-Path -LiteralPath $RepositoryRoot -PathType Container)) {
     throw "Repository directory not found: $RepositoryRoot"
 }
@@ -34,6 +71,7 @@ $excludedOfficialSkills = @(
     'lark-wiki', 'lark-workflow-meeting-summary',
     'lark-workflow-standup-report'
 )
+$removedSkillDirectories = @('coding-naming', 'coding-style')
 
 if (-not (Test-Path -LiteralPath $skillsRoot -PathType Container)) {
         Add-Failure "skills directory not found: $skillsRoot"
@@ -52,7 +90,45 @@ if (-not (Test-Path -LiteralPath $skillsRoot -PathType Container)) {
         Add-Failure "Skill maintenance document is missing: $maintenanceDocument"
     }
 
+    foreach ($removedSkillDirectory in $removedSkillDirectories) {
+        $removedSkillPath = Join-Path $skillsRoot $removedSkillDirectory
+        if (Test-Path -LiteralPath $removedSkillPath) {
+            Add-Failure "Removed compatibility Skill directory must not be present: $removedSkillPath"
+        }
+    }
+
     $expectedReferences = @{
+        'coding-cpp-core' = @(
+            'cpp-naming-and-api.md',
+            'cpp-module-template.md'
+        )
+        'coding-c-safety' = @(
+            'embedded-c-safety-checklist.md'
+        )
+        'coding-rtthread-style' = @(
+            'rtthread-ipc-templates.md'
+        )
+        'can-bus-dev' = @(
+            'can-frame-templates.md'
+        )
+        'embedded-arch' = @(
+            'architecture-adapter-templates.md'
+        )
+        'meter-datapool' = @(
+            'datapool-contract-templates.md'
+        )
+        'meter-storage' = @(
+            'persistence-templates.md'
+        )
+        'figma-to-lvgl-motion' = @(
+            'animation-trace-template.md'
+        )
+        'lark-user-skill' = @(
+            'embedded-doc-writing.md'
+        )
+        'taobao-product-inquiry' = @(
+            'taobao-inquiry-workflow.md'
+        )
         'guider-engineering' = @(
             'guider-1x-project-edit.md',
             'guider-1x-source-edit.md',
@@ -68,7 +144,7 @@ if (-not (Test-Path -LiteralPath $skillsRoot -PathType Container)) {
 
         $skillFile = Join-Path $skillDirectory.FullName 'SKILL.md'
 
-        $content = Get-Content -LiteralPath $skillFile -Raw -Encoding UTF8
+        $content = Get-StrictUtf8Text -Path $skillFile
         $hasFrontmatter = $content.TrimStart().StartsWith('---')
         $hasName = $content -match '(?m)^name:\s*[^\r\n]+'
         $hasDescription = $content -match '(?m)^description:\s*[^\r\n]+'
@@ -80,6 +156,14 @@ if (-not (Test-Path -LiteralPath $skillsRoot -PathType Container)) {
         $declaredName = $nameMatch.Groups[1].Value.Trim().Trim('"', "'")
         if ($nameMatch.Success -and $declaredName -ne $skillDirectory.Name) {
             Add-Failure "Skill name does not match directory name: $skillFile"
+        }
+
+        if ($content.Length -gt 12000) {
+            Add-Notice "Large Skill entry ($($content.Length) chars): $skillFile"
+        }
+        $codeFenceCount = ([regex]::Matches($content, '(?m)^```')).Count
+        if ($codeFenceCount -gt 6) {
+            Add-Notice "Skill has many code fences ($codeFenceCount): $skillFile"
         }
 
         $absolutePathPattern = '(?i)[A-Z]:\\|/Users/|/home/'
@@ -96,6 +180,8 @@ if (-not (Test-Path -LiteralPath $skillsRoot -PathType Container)) {
                     $referenceFile = Join-Path $referencesRoot $referenceName
                     if (-not (Test-Path -LiteralPath $referenceFile -PathType Leaf)) {
                         Add-Failure "Required Skill reference is missing: $referenceFile"
+                    } elseif ($content -notmatch [regex]::Escape("references/$referenceName")) {
+                        Add-Failure "Skill entry does not declare required reference: $skillFile -> $referenceName"
                     }
                 }
             }
@@ -105,7 +191,7 @@ if (-not (Test-Path -LiteralPath $skillsRoot -PathType Container)) {
             $_.Extension -eq '.md'
         })
         foreach ($skillTextFile in $skillTextFiles) {
-            $skillText = Get-Content -LiteralPath $skillTextFile.FullName -Raw -Encoding UTF8
+            $skillText = Get-StrictUtf8Text -Path $skillTextFile.FullName
             if ($skillText -match $absolutePathPattern) {
                 Add-Failure "Skill appears to contain a local absolute path: $($skillTextFile.FullName)"
             }
@@ -120,18 +206,23 @@ if (-not (Test-Path -LiteralPath $skillsRoot -PathType Container)) {
     $guiderSkillDirectory = Join-Path $skillsRoot 'guider-engineering'
     $guiderSkillFile = Join-Path $guiderSkillDirectory 'SKILL.md'
     if (Test-Path -LiteralPath $guiderSkillFile -PathType Leaf) {
-        $guiderSkillContent = Get-Content -LiteralPath $guiderSkillFile -Raw -Encoding UTF8
+        $guiderSkillContent = Get-StrictUtf8Text -Path $guiderSkillFile
         $guiderPermissionPatterns = @(
             'project-edit',
             'source-edit',
             'generated/',
             'custom/',
-            '\u53ea\u8bfb',
-            '\u53ef\u8bfb\u5199'
+            '只读',
+            '可写'
         )
         foreach ($pattern in $guiderPermissionPatterns) {
             if ($guiderSkillContent -notmatch $pattern) {
                 Add-Failure "Guider Skill routing or permission marker is missing: $pattern"
+            }
+        }
+        foreach ($referenceName in $expectedReferences['guider-engineering']) {
+            if ($guiderSkillContent -notmatch [regex]::Escape($referenceName)) {
+                Add-Failure "Guider Skill does not declare required reference: $referenceName"
             }
         }
     }
@@ -146,9 +237,19 @@ if (-not (Test-Path -LiteralPath $skillsRoot -PathType Container)) {
     )
     foreach ($routeFile in $legacyRouteFiles) {
         if (Test-Path -LiteralPath $routeFile -PathType Leaf) {
-            $routeContent = Get-Content -LiteralPath $routeFile -Raw -Encoding UTF8
+            $routeContent = Get-StrictUtf8Text -Path $routeFile
             if ($routeContent -match 'guider-lvgl-port') {
                 Add-Failure "Legacy Guider Skill name remains in an active route document: $routeFile"
+            }
+        }
+    }
+
+    $globalPromptPath = Join-Path $RepositoryRoot 'prompts/global.md'
+    if (Test-Path -LiteralPath $globalPromptPath -PathType Leaf) {
+        $globalPrompt = Get-StrictUtf8Text -Path $globalPromptPath
+        foreach ($requiredRoute in @('coding-cpp-core', 'coding-c-safety', 'guider-engineering')) {
+            if ($globalPrompt -notmatch [regex]::Escape($requiredRoute)) {
+                Add-Failure "Global prompt is missing required route: $requiredRoute"
             }
         }
     }
@@ -183,7 +284,7 @@ foreach ($documentationFile in $documentationFiles) {
         continue
     }
 
-    $documentationLines = Get-Content -LiteralPath $documentationFile.FullName -Encoding UTF8
+    $documentationLines = (Get-StrictUtf8Text -Path $documentationFile.FullName) -split "`r?`n"
     foreach ($documentationLine in $documentationLines) {
         $isUnconditional = $false
         foreach ($pattern in $unconditionalGeneratedPatterns) {
@@ -203,7 +304,7 @@ foreach ($documentationFile in $documentationFiles) {
 function Test-MarkdownLinks {
     param([Parameter(Mandatory = $true)][string]$MarkdownFile)
 
-    $markdownText = Get-Content -LiteralPath $MarkdownFile -Raw -Encoding UTF8
+    $markdownText = Get-StrictUtf8Text -Path $MarkdownFile
     $linkMatches = [regex]::Matches(
         $markdownText,
         '(?<!\!)\[[^\]\r\n]+\]\(\s*(?<target><[^>\r\n]+>|[^)\s]+)'
@@ -265,7 +366,7 @@ $allTextFiles = @(Get-ChildItem -LiteralPath $RepositoryRoot -Recurse -File -For
     $_.Extension -in @('.md', '.ps1', '.yml', '.yaml', '.json', '.toml')
 })
 foreach ($file in $allTextFiles) {
-    $text = Get-Content -LiteralPath $file.FullName -Raw -Encoding UTF8
+    $text = Get-StrictUtf8Text -Path $file.FullName
     if ($text -match '(?i)(api[_-]?key|access[_-]?token|secret[_-]?key|password\s*[:=])') {
         Add-Failure "Possible secret or password field found: $($file.FullName)"
     }
