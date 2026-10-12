@@ -9,6 +9,14 @@
 ## 显式字节序与位域
 
 ```c
+/**
+ * @brief 从 CAN 数据区读取小端无符号 16 位字段。
+ * @param[in] data 报文数据指针；不能为空，且必须覆盖 offset 起始位置。
+ * @param[in] length 数据区实际长度；不能超过当前帧的有效 DLC。
+ * @param[in] offset 字段起始偏移；必须满足 offset + 2 不超过 length。
+ * @param[out] value 输出字段；成功时写入解析结果，失败时保持原值。
+ * @return true 表示读取成功；false 表示参数或边界校验失败。
+ */
 static bool can_get_u16_le(const uint8_t *data,
                            size_t length,
                            size_t offset,
@@ -26,6 +34,13 @@ static bool can_get_u16_le(const uint8_t *data,
     return true;
 }
 
+/**
+ * @brief 从单字节值中提取连续位域。
+ * @param[in] value 待读取的原始字节。
+ * @param[in] shift 位域起始位；范围由目标协议确认。
+ * @param[in] width 位域宽度；必须大于 0 且不跨越该字节。
+ * @return 提取后的无符号值；参数非法时返回 0。
+ */
 static uint32_t can_get_bits(uint8_t value, uint8_t shift, uint8_t width)
 {
     /* shift + width 必须落在一个字节内；跨字节位域应单独按协议解析。 */
@@ -44,6 +59,12 @@ static uint32_t can_get_bits(uint8_t value, uint8_t shift, uint8_t width)
 ## 接收解析流程
 
 ```c
+/**
+ * @brief 校验并解析一帧模块报文。
+ * @param[in] frame 待解析报文；必须包含已确认的 ID、帧类型、长度和数据区。
+ * @param[out] signal 解析结果；仅在整帧校验和字段解码成功后更新。
+ * @return true 表示解析成功；false 表示帧不匹配、长度非法、校验失败或参数为空。
+ */
 bool module_parse_frame(const can_frame_t *frame, module_signal_t *signal)
 {
     if ((frame == NULL) || (signal == NULL)) {

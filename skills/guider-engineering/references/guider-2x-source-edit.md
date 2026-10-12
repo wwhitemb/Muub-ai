@@ -25,11 +25,16 @@
 /* 定时器与当前 2.x screen 生命周期绑定，离开页面必须先删除。 */
 static lv_timer_t *s_screen_timer;
 
+/**
+ * @brief 2.x screen 刷新定时器回调，复制数据快照后更新控件。
+ * @param[in] timer 当前 screen 定时器；user_data 必须仍指向有效界面对象。
+ * @return 无；控件刷新必须运行在项目规定的 LVGL 线程。
+ */
 static void screen_timer_cb(lv_timer_t *timer)
 {
     /* user_data 必须是 screen_enter 传入且仍然有效的 gg_ui_t。 */
     gg_ui_t *ui = lv_timer_get_user_data(timer);
-    project_data_t snapshot;
+    project_data_t snapshot; /* 锁内复制的数据快照；离开锁后供控件刷新使用。 */
 
     if (ui == NULL) {
         return;
@@ -43,6 +48,11 @@ static void screen_timer_cb(lv_timer_t *timer)
     project_update_2x_widget(ui, &snapshot);
 }
 
+/**
+ * @brief 进入 2.x screen 并创建刷新定时器。
+ * @param[in] ui 当前 screen 句柄；不能为空，生命周期必须覆盖回调执行期。
+ * @return 无；创建失败时必须进入项目定义的降级或错误上报流程。
+ */
 void screen_enter(gg_ui_t *ui)
 {
     if (ui == NULL) {
@@ -53,6 +63,10 @@ void screen_enter(gg_ui_t *ui)
     /* 创建失败时必须进入项目定义的降级或错误上报流程。 */
 }
 
+/**
+ * @brief 离开 2.x screen 并注销刷新定时器。
+ * @return 无；删除定时器后才允许释放 screen 和控件资源。
+ */
 void screen_leave(void)
 {
     if (s_screen_timer != NULL) {

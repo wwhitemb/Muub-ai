@@ -33,6 +33,11 @@ typedef struct {
     datapool_value_t field_b; /* 示例字段；替换为目标数据池中的实际字段。 */
 } datapool_snapshot_t;
 
+/**
+ * @brief 在锁内复制数据池一致快照。
+ * @param[out] snapshot 输出快照；不能为空，失败时不返回半更新数据。
+ * @return true 表示加锁、复制和解锁均成功；false 表示任一步骤失败。
+ */
 bool datapool_snapshot_get(datapool_snapshot_t *snapshot)
 {
     if (snapshot == NULL) {
@@ -55,6 +60,12 @@ bool datapool_snapshot_get(datapool_snapshot_t *snapshot)
 ## 写入与有效性
 
 ```c
+/**
+ * @brief 校验原始字段并提交到数据池。
+ * @param[in] raw_value 待更新原始值；单位、范围和编码由字段契约确认。
+ * @param[in] timestamp 数据时间戳或序号；具体单位由工程定义。
+ * @return true 表示字段已提交；false 表示输入非法或更新未完成。
+ */
 bool datapool_update_field(uint32_t raw_value, uint32_t timestamp)
 {
     /* 先在锁外完成无副作用的范围校验，减少临界区占用时间。 */

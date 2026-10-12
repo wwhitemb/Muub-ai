@@ -35,8 +35,22 @@ typedef enum {
     MODULE_RESULT_IO_ERROR            /* 底层设备/存储操作失败。 */
 } module_result_t;
 
+/**
+ * @brief 初始化模块并取得配置中声明的资源。
+ * @param[in] config 初始化配置；不能为空，字段范围需按目标工程确认。
+ * @return 项目约定的成功或错误码；失败时模块保持不可用。
+ */
 module_result_t module_init(const module_config_t *config);
+/**
+ * @brief 释放模块持有的资源并恢复未初始化状态。
+ * @return 项目约定的成功或错误码；重复调用必须保持幂等。
+ */
 module_result_t module_deinit(void);
+/**
+ * @brief 读取当前值快照。
+ * @param[out] value 输出值指针，不能为空；成功后由调用方持有副本。
+ * @return 项目约定的成功或错误码；模块未就绪时不得伪造有效数据。
+ */
 module_result_t module_get_value(uint32_t *value);
 
 #ifdef __cplusplus
@@ -56,11 +70,21 @@ static bool s_module_ready;
 /* 示例缓存值；单位、有效性和更新来源必须在接口契约中写明。 */
 static uint32_t s_module_value;
 
+/**
+ * @brief 校验模块初始化配置。
+ * @param[in] config 待校验配置；当前示例只验证指针，字段范围需按工程补充。
+ * @return true 表示配置可继续使用；false 表示调用方必须停止初始化。
+ */
 static bool module_config_is_valid(const module_config_t *config)
 {
     return (config != NULL);
 }
 
+/**
+ * @brief 初始化模块并取得配置中声明的资源。
+ * @param[in] config 初始化配置；不能为空，字段范围需按目标工程确认。
+ * @return 成功或具体错误码；失败时保持模块不可用并清理已取得资源。
+ */
 module_result_t module_init(const module_config_t *config)
 {
     if (!module_config_is_valid(config)) {
@@ -74,6 +98,10 @@ module_result_t module_init(const module_config_t *config)
     return MODULE_RESULT_OK;
 }
 
+/**
+ * @brief 释放模块持有的资源并恢复未初始化状态。
+ * @return 成功或具体错误码；重复调用保持幂等。
+ */
 module_result_t module_deinit(void)
 {
     if (!s_module_ready) {
@@ -86,6 +114,11 @@ module_result_t module_deinit(void)
     return MODULE_RESULT_OK;
 }
 
+/**
+ * @brief 读取当前值快照。
+ * @param[out] value 输出值指针，不能为空；成功后由调用方持有副本。
+ * @return 成功或具体错误码；模块未就绪时不写入输出值。
+ */
 module_result_t module_get_value(uint32_t *value)
 {
     /* 输出指针由调用方提供，成功返回后值的生命周期属于调用方。 */

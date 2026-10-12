@@ -16,12 +16,17 @@ static struct rt_semaphore s_worker_sem;  /* 唤醒信号量；是否合并通�
 /* 仅表示线程及其依赖已完成初始化，不代表业务数据有效。 */
 static bool s_worker_ready;               /* 依赖初始化完成标志，不代表业务数据有效。 */
 
+/**
+ * @brief 工作线程入口，在任务上下文处理待办业务。
+ * @param[in] parameter 线程创建时传入的上下文；当前模板不使用。
+ * @return 无；线程退出策略和永久运行语义由目标工程确认。
+ */
 static void worker_entry(void *parameter)
 {
     RT_UNUSED(parameter);
 
     for (;;) {
-        const rt_err_t wait_result =
+        const rt_err_t wait_result = /* 记录等待结果，失败时不得继续假设事件已到达。 */
             rt_sem_take(&s_worker_sem, RT_WAITING_FOREVER);
         if (wait_result != RT_EOK) {
             /* 永久等待失败通常意味着对象被删除或系统异常；
@@ -41,6 +46,12 @@ static void worker_entry(void *parameter)
 ## ISR 通知任务
 
 ```c
+/**
+ * @brief 设备接收回调，仅向工作线程发送快速通知。
+ * @param[in] device 触发回调的设备句柄；具体使用方式由工程确认。
+ * @param[in] size 本次接收数据量；当前模板仅作通知，不在回调中解析。
+ * @return RT-Thread 错误码；通知失败必须进入项目诊断路径。
+ */
 static rt_err_t device_rx_indicate(rt_device_t device, rt_size_t size)
 {
     RT_UNUSED(device);
@@ -58,6 +69,11 @@ static rt_err_t device_rx_indicate(rt_device_t device, rt_size_t size)
 static struct rt_mutex s_data_mutex;
 static struct rt_event s_save_event;
 
+/**
+ * @brief 在互斥锁保护下复制共享值快照。
+ * @param[out] value 输出快照；不能为空，失败时不伪造成功数据。
+ * @return true 表示复制和解锁均成功；false 表示参数、加锁或解锁失败。
+ */
 static bool copy_shared_value(uint32_t *value)
 {
     if (value == RT_NULL) {
@@ -73,6 +89,11 @@ static bool copy_shared_value(uint32_t *value)
     return (rt_mutex_release(&s_data_mutex) == RT_EOK);
 }
 
+/**
+ * @brief 向持久化工作线程发送保存请求。
+ * @return 无；发送失败必须由工程既有诊断机制记录。
+ * @note 具体事件位和合并语义由项目配置确认。
+ */
 static void request_save(void)
 {
     /* 只发送事件；文件操作放在可阻塞的工作线程。

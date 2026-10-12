@@ -32,11 +32,16 @@ typedef struct {
 /* 定时器属于当前页面；页面离开或销毁前必须删除，避免回调访问旧 UI。 */
 static lv_timer_t *s_page_timer;
 
+/**
+ * @brief 1.x 页面刷新定时器回调，复制数据快照后更新控件。
+ * @param[in] timer 当前页面定时器；其 user_data 必须仍指向有效页面对象。
+ * @return 无；控件更新必须运行在项目规定的 LVGL 线程。
+ */
 static void page_timer_cb(lv_timer_t *timer)
 {
     /* user_data 必须来自 page_enter 时传入的页面句柄，不能从全局猜测。 */
     lv_ui *ui = lv_timer_get_user_data(timer);
-    guider_data_t snapshot;
+    guider_data_t snapshot; /* 锁内复制的数据快照；离开锁后供控件刷新使用。 */
 
     if (ui == NULL) {
         return;
@@ -50,6 +55,11 @@ static void page_timer_cb(lv_timer_t *timer)
     project_update_1x_widget(ui, &snapshot);
 }
 
+/**
+ * @brief 进入 1.x 页面并创建页面刷新定时器。
+ * @param[in] ui 当前页面句柄；不能为空，生命周期必须覆盖定时器回调。
+ * @return 无；创建失败必须进入项目定义的降级或错误上报流程。
+ */
 void page_enter(lv_ui *ui)
 {
     if (ui == NULL) {
@@ -60,6 +70,10 @@ void page_enter(lv_ui *ui)
     /* 创建失败不能伪造页面已启动；按项目错误路径记录并降级。 */
 }
 
+/**
+ * @brief 离开 1.x 页面并注销其刷新定时器。
+ * @return 无；删除定时器后才允许释放页面对象和自定义资源。
+ */
 void page_leave(void)
 {
     if (s_page_timer != NULL) {

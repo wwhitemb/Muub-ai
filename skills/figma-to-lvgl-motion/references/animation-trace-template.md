@@ -27,6 +27,12 @@
 ## LVGL 回调骨架
 
 ```c
+/**
+ * @brief 动画执行回调，将量化值同步映射到几何和透明度属性。
+ * @param[in] object 动画创建时传入的上下文；生命周期必须覆盖回调执行期。
+ * @param[in] value LVGL 动画当前值；单位和合法范围由动画配置确认。
+ * @return 无；必须运行在项目允许的 LVGL 线程上下文。
+ */
 static void animation_exec(void *object, int32_t value)
 {
     /* object 的真实类型和生命周期必须从动画创建点确认；

@@ -45,6 +45,12 @@ if (!screen) {
     throw new Error("screen not found: " + screenName);
 }
 
+/**
+ * 递归遍历 1.x 设计源节点，并把每个结构节点交给调用方检查。
+ * @param {unknown} node 当前待遍历节点。
+ * @param {string} path 当前节点的可追踪路径。
+ * @param {(node: object, path: string) => void} callback 节点检查回调。
+ */
 function walk(node, path, callback) {
     if (!node || typeof node !== "object") {
         return;

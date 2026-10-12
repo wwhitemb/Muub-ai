@@ -40,6 +40,12 @@ if (!screen) {
     throw new Error("screen not found: " + screenName);
 }
 
+/**
+ * 递归遍历 2.x 设计源节点并收集匹配的控件 ID。
+ * @param {unknown} node 当前待遍历节点。
+ * @param {string} path 当前节点的可追踪路径。
+ * @param {Array<object>} hits 匹配结果输出数组。
+ */
 function walk(node, path, hits) {
     if (!node || typeof node !== "object") {
         return;

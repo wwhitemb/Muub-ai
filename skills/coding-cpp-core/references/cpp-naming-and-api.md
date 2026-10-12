@@ -17,16 +17,35 @@
 ## 公共与私有 API
 
 ```c
-/* 公共 API：模块前缀 + 动词 + 领域对象；返回值语义必须来自项目约定。 */
+/**
+ * @brief 初始化模块。
+ * @param[in] config 初始化配置；字段范围和生命周期由目标工程确认。
+ * @return 项目约定的成功或错误码。
+ */
 int32_t module_init(const module_config_t *config);
+/**
+ * @brief 读取模块状态快照。
+ * @param[out] state 输出状态；不能为空，成功后由调用方持有副本。
+ * @return 项目约定的成功或错误码。
+ */
 int32_t module_get_state(module_state_t *state);
+/**
+ * @brief 设置模块工作模式。
+ * @param[in] mode 目标模式；有效枚举范围由目标工程确认。
+ * @return 项目约定的成功或错误码。
+ */
 int32_t module_set_mode(module_mode_t mode);
 
-/* 私有函数：仅本文件使用，说明输入有效前提和失败影响。 */
+/** 校验模块配置；输入为空或字段非法时返回 false。 */
 static bool module_validate_config(const module_config_t *config);
+/** 应用目标状态；调用前必须满足模块已初始化等工程前提。 */
 static void module_apply_state(module_state_t state);
 
-/* 回调名称应体现来源和执行上下文，不能用 callback1 这类无语义名称。 */
+/**
+ * @brief 模块事件回调类型。
+ * @param[in] event 触发事件；枚举含义由目标工程确认。
+ * @param[in] user_data 注册回调时提供的上下文；所有权由注册方管理。
+ */
 typedef void (*module_event_cb_t)(module_event_t event, void *user_data);
 ```
 

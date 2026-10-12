@@ -9,11 +9,26 @@
 ## 输入与缓冲区
 
 ```c
+/**
+ * @brief 检查缓冲区区间是否完全落在容量范围内。
+ * @param[in] offset 区间起始偏移。
+ * @param[in] width 区间长度。
+ * @param[in] capacity 缓冲区总容量。
+ * @return true 表示区间合法；false 表示越界或整数关系不满足。
+ */
 static bool buffer_range_valid(size_t offset, size_t width, size_t capacity)
 {
     return (offset <= capacity) && (width <= (capacity - offset));
 }
 
+/**
+ * @brief 从缓冲区读取小端无符号 16 位值。
+ * @param[in] buffer 输入缓冲区；不能为空。
+ * @param[in] buffer_length 输入缓冲区有效长度。
+ * @param[in] offset 字段起始偏移；读取范围必须受 buffer_length 约束。
+ * @param[out] value 输出值；失败时保持调用方原值。
+ * @return true 表示读取成功；false 表示参数为空或范围校验失败。
+ */
 bool read_u16_le(const uint8_t *buffer,
                  size_t buffer_length,
                  size_t offset,
@@ -37,13 +52,18 @@ bool read_u16_le(const uint8_t *buffer,
 ```c
 static volatile uint32_t s_pending_count; /* 待处理事件计数；volatile 不替代原子操作或临界区。 */
 
+/**
+ * @brief 外设中断服务函数，仅保存必要状态并通知工作线程。
+ * @return 无；不得阻塞、打印或执行复杂解析。
+ * @note 具体中断来源由 BSP 注册关系确认。
+ */
 /* ISR 只保存必要状态并发出快速通知；具体通知 API 由项目提供。 */
 static void peripheral_isr(void)
 {
-    const uint32_t status = project_read_status();
+    const uint32_t status = project_read_status(); /* 保存本次中断状态，供清中断接口使用。 */
 
     project_clear_interrupt(status);
-    s_pending_count++;
+    s_pending_count++; /* 记录待处理事件数量；并发安全性由项目同步机制保证。 */
     project_notify_worker_from_isr();
 }
 ```

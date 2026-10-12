@@ -17,6 +17,11 @@ typedef struct {
     uint32_t checksum;       /* 不参与自身计算，覆盖范围必须由存储格式明确。 */
 } module_record_t;
 
+/**
+ * @brief 计算持久化记录的校验值。
+ * @param[in] record 待读取记录；不能为空，且布局必须符合当前格式契约。
+ * @return 记录校验值；算法、初值和覆盖范围必须由工程确认。
+ */
 static uint32_t record_checksum(const module_record_t *record)
 {
     /* 只计算 checksum 字段之前的字节；不要默认结构体无填充。 */
@@ -43,17 +48,27 @@ static uint32_t record_checksum(const module_record_t *record)
 ## 异步保存
 
 ```c
+/**
+ * @brief 从高优先级或 UI/通信上下文发送异步保存请求。
+ * @return 无；发送失败必须进入可观察诊断路径。
+ * @note 具体事件位由项目配置确认。
+ */
 static void request_persist(void)
 {
     /* 高优先级/UI/通信上下文只发请求，不执行文件操作。 */
     (void)project_event_send(PROJECT_SAVE_EVENT);
 }
 
+/**
+ * @brief 持久化工作线程入口，在线程上下文完成快照、校验和原子写入。
+ * @param[in] parameter 线程创建时传入的上下文；当前模板不使用。
+ * @return 无；线程退出和重试策略由项目配置确认。
+ */
 static void persist_worker(void *parameter)
 {
     /* record 只在线程栈中使用；异步写入接口若不立即复制数据，
      * 必须改为使用工程认可的持久化缓冲区。 */
-    module_record_t record;
+    module_record_t record; /* 工作线程私有记录；写入接口不得在异步调用后继续借用其地址。 */
     (void)parameter;
 
     for (;;) {
